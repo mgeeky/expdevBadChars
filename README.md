@@ -160,6 +160,11 @@ Now we are going to highlight any **bad characters** in default options set
 
 ![Example1](1.jpg)
 
+Or for those who prefer classical output, the **LCS** algorithm may be turned off as well:
+
+![Example1](2.jpg)
+
+
 Looks like we have a corrupted byte - **0x2f** has been replaced with **0x5c** (`/` => `\`).
 
 What if our **bad_buffer** contained some random bytes inserted inside?
@@ -194,7 +199,7 @@ Let's take for instance following `memdump`:
 
 It contains some bytes added, some removed. This is what the binary diffing would look like using LCS-modified algorithm taken from Mona.py:
 
-![Example2](2.jpg)
+![Example2](3.jpg)
 
 
 
