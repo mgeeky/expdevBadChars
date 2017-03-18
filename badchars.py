@@ -45,7 +45,7 @@ class BytesParser():
         'hexdump': r'^[^0-9a-f]*[0-9a-f]{2,}\s+([0-9a-f\s]+[0-9a-f])$',
         'classic-hexdump':r'^[0-9a-f]*[0-9a-f]{2,}(?:\:|\s)+\s([0-9a-f\s]+)\s{2,}.+$',
         'hexdump-C': r'^[0-9a-f]*[0-9a-f]{2,}\s+\s([0-9a-f\s]+)\s*\|', 
-        'escaped-hexes': r'^[^\'"]*((?:\'[\\\\x0-9a-f]+\')|(?:"[\\\\x0-9a-f]+"))',
+        'escaped-hexes': r'^[^\'"]*((?:\'[\\\\x0-9a-f]{8,}\')|(?:"[\\\\x0-9a-f]{8,}"))',
         'hexstring': r'^([0-9a-f]+)$',
         'powershell': r'^[^0x]+((?:0x[0-9a-f]{1,2},?)+)$',
         'byte-array': r'^[^0x]*((?:0x[0-9a-f]{2}(?:,\s?))+)',
@@ -144,7 +144,7 @@ class BytesParser():
     def post_process_bytes_line(line):
         outb = []
         l = line.strip()[:]
-        strip = ['0x', ',', ' ', '%u', '+', '.']
+        strip = ['0x', ',', ' ', '\\', 'x', '%u', '+', '.', "'", '"']
         for s in strip:
             l = l.replace(s, '')
 
@@ -155,7 +155,7 @@ class BytesParser():
     @staticmethod
     def preprocess_bytes_line(line):
         l = line.strip()[:]
-        strip = [' ', '(byte)', '+', '.']
+        strip = ['(byte)', '+', '.']
         for s in strip:
             l = l.replace(s, '')
         return l
@@ -351,7 +351,7 @@ class HexDumpPrinter:
                     new_ascii += ascii[j]
             new_ascii, ascii = ascii, new_ascii
 
-        if color_address:
+        if color_address or len(letter) > 1:
             if options.colored:
                 address = bcolors.OKBLUE + address + bcolors.ENDC
             else:
@@ -505,7 +505,7 @@ def check_if_match():
     for i in xrange(minlen):
         if buffers[0][i] != buffers[1][i]:
             diff += 1
-            bad_chars[buffers[1][i]].append(buffers[0][i])
+            bad_chars[buffers[0][i]].append(buffers[1][i])
 
     if len(buffers[0]) > minlen:
         bad_chars[-1].append(buffers[1][-1])
@@ -535,23 +535,26 @@ def main(argv):
     else:
         bad_chars_string = ''
         if not options.quiet:
-            chars_flatten = set([item for sublist in bad_chars.values() for item in sublist])
-            chars = ', '.join(['0x%02x' % c for c in chars_flatten])
+            bad_chars_flatten = filter(lambda x: x != -1, bad_chars.keys())
+            chars = ', '.join(['0x%02x' % c for c in bad_chars_flatten])
             bad_chars_string += _out("Likely to be bad chars: " + bcolors.HEADER + chars + "\n", bcolors.WARNING)
             bad_chars_string += _out("Found mappings:\n", bcolors.WARNING)
 
             tochar = lambda x: x if ((x > 0 and x < 256) and (chr(x) in string.printable)) else '.'
+            added = set()
             for k, v in bad_chars.items():
                 a = k
                 a1 = tochar(k)
                 for b in v:
                     b1 = tochar(b)
-                    bad_chars_string += "\t0x%02x (%s) => 0x%02x (%s)\n" % (a, a1, b, b1)
+                    if (a, b) not in added and a != -1:
+                        bad_chars_string += "\t0x%02x (%s) => 0x%02x (%s)\n" % (a, a1, b, b1)
+                        added.add((a,b))
 
         minlen = min(len(buffers[0]), len(buffers[1]))
         proc = (float(res)/float(minlen) * 100.0)
         out(err("\n\tBuffers differ! Found at least %d differences (%d/%d, %0.2f%%) and %d bad chars\n" \
-                % (res, res, minlen, proc, len(chars_flatten))))
+                % (res, res, minlen, proc, len(bad_chars_flatten))))
 
         if options.quiet:
             return 1
