@@ -283,7 +283,7 @@ def bin2hex(binbytes):
     """
     Converts a binary string to a string of space-separated hexadecimal bytes.
     """
-    if type(binbytes[0]) == type(''):
+    if len(binbytes) > 0 and type(binbytes[0]) == type(''):
         return ' '.join('%02x' % ord(c) for c in binbytes)
     else:
         return ' '.join('%02x' % c for c in binbytes)
@@ -545,9 +545,15 @@ class MemoryComparator(object):
 class HexDumpPrinter:
     def __init__(self, options, good_buffer, bad_buffer):
         self.comparator = None
+        self.fill_matching = ''
         if not options.dont_use_lcs:
             self.dump1 = []
             self.dump2 = []
+
+            if not options.match_empty:
+                self.fill_matching = ' ' 
+            else:
+                self.fill_matching = '0' 
             self.use_comparator()
         else:
             self.dump1 = HexDumpPrinter.hex_dump(buffers[0]).split('\n')
@@ -655,13 +661,17 @@ class HexDumpPrinter:
                 else:                 values.append(bin2hex(right)) # byte modified
 
             line1 = '%04x' % (i * 16) + ' | ' + bin2hex(src).ljust(49, ' ')
-            line2 = '%04x' % (i * 16) + ' | ' + ' '.join(sym.ljust(2) for sym in values)
+            line2 = '%04x' % (i * 16) + ' | ' + ' '.join(sym.ljust(2, self.fill_matching) for sym in values)
+
             line1 += '| ' + ''.join(map(lambda x: x if ord(x) >= 0x20 and ord(x) < 0x7f else '.', src)).ljust(16, ' ')
             ascii2 = '| '
             for i in range(len(values)): ascii2 += toprint(values[i], src[i])
             for i in range(len(values), 16): ascii2 += ' '
             line2 = line2.ljust(56, ' ')
             line2 += ascii2
+
+            #out(dbg("Line1: ('%s')" % line1))
+            #out(dbg("Line2: ('%s')" % line2))
 
             self.dump1.append(line1)
             self.dump2.append(line2)
@@ -750,7 +760,7 @@ class HexDumpPrinter:
 
             for i in range(minlen):
                 if d1bytes[i] != d2bytes[i]:
-                    if not options.dont_use_lcs and d2bytes[i] == ' ' * len(d2bytes[i]):
+                    if not options.dont_use_lcs and d2bytes[i] == self.fill_matching * len(d2bytes[i]):
                         continue
                     d1bytes[i] = self.good_start_diff + d1bytes[i] + self.good_stop_diff
                     d2bytes[i] = self.bad_start_diff + d2bytes[i] + self.bad_stop_diff
