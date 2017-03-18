@@ -253,7 +253,6 @@ class BytesParser():
         'dword': unpack_dword
     }
 
-
 def memoized(func):
     ''' A function decorator to make a function cache it's return values.
     If a function returns a generator, it's transformed into a list and
@@ -288,7 +287,6 @@ def bad_chars(comp):
     guessed_bc = guess_bad_chars(comp)
 
     return (broken, guessed_bc)
-
 
 def rrange(x, y = 0):
     """ Creates a reversed range (from x - 1 down to y).
@@ -352,10 +350,9 @@ def draw_chunk_table(comp):
     # draw the table
     sizes = tuple(max(len(str(c)) for c in col) for col in zip(*table))
     for i, row in enumerate(table):
-        out(''.join(str(x).ljust(size) + delim for x, size, delim in zip(row, sizes, delims)))
+        out('\t' + ''.join(str(x).ljust(size) + delim for x, size, delim in zip(row, sizes, delims)))
         if i == 0 or (i == last_unmodified + 1 and i < len(table)):
-            out('-' * (sum(sizes) + sum(len(d) for d in delims)))
-
+            out('\t' + '-' * (sum(sizes) + sum(len(d) for d in delims)))
 
 
 #
@@ -365,7 +362,6 @@ def draw_chunk_table(comp):
 # It utilizes modified Longest Common Subsequence algorithm to mark number of modifications over
 # supplied input to let it be transformed into another input, as compared to.
 #
-
 class MemoryComparator(object):
     ''' Solve the memory comparison problem with a special dynamic programming
     algorithm similar to that for the LCS problem '''
@@ -648,7 +644,7 @@ class HexDumpPrinter:
                 elif len(right) == 0: values.append('-1')           # byte dropped
                 elif len(right) == 2: values.append('+1')           # byte expanded
                 else:                 values.append(bin2hex(right)) # byte modified
-                    
+
             line1 = '%04x' % (i * 16) + ' | ' + bin2hex(src).ljust(49, ' ')
             line2 = '%04x' % (i * 16) + ' | ' + ' '.join(sym.ljust(2) for sym in values)
             line1 += '| ' + ''.join(map(lambda x: x if ord(x) >= 0x20 and ord(x) < 0x7f else '.', src)).ljust(16, ' ')
@@ -670,12 +666,12 @@ class HexDumpPrinter:
         if options.colored:
             letter = bcolors.HEADER + letter + bcolors.ENDC
 
-        return '{}{} | {} | {} | {}  | {}'.format(letter, d1t[0], d1t[1], d1t[2], d2t[1], d2t[2])
+        return '{}{} | {} | {} | {} | {}'.format(letter, d1t[0], d1t[1], d1t[2].ljust(16), d2t[1], d2t[2])
 
     @staticmethod
     def extract_bytes(line):
         linet = line.split(' | ')
-        strbytes = linet[1].strip().split(' ')
+        strbytes = [linet[1][i:i+2] for i in range(0, len(linet[1]), 3)]
         bytes = []
         for s in strbytes:
             bytes.append(s)
@@ -744,6 +740,8 @@ class HexDumpPrinter:
 
             for i in range(minlen):
                 if d1bytes[i] != d2bytes[i]:
+                    if not options.dont_use_lcs and d2bytes[i] == ' ' * len(d2bytes[i]):
+                        continue
                     d1bytes[i] = self.good_start_diff + d1bytes[i] + self.good_stop_diff
                     d2bytes[i] = self.bad_start_diff + d2bytes[i] + self.bad_stop_diff
 
@@ -754,6 +752,16 @@ class HexDumpPrinter:
     
     def __str__(self):
         buff = ''
+
+        if not options.wide:
+            buff += ' ' * 5 + ' | ' + ' '.join(['%02x' % x for x in range(16)]) + '  |\n'
+            buff += ' ' * 5 + ' |' + '-' * 50 + '|\n'
+        else:
+            buff += ' ' * 5 + ' | ' + ' '.join(['%02x' % x for x in range(16)]) + '  |'
+            buff = buff + ' ' * 12 + buff + '\n'
+            buff += ' ' * 5 + ' |' + '-' * 50 + '|' + ' ' * 12
+            buff += ' ' * 5 + ' |' + '-' * 50 + '|\n'
+
         for i in range(self.minlen):
             d1 = self.dump1[i]
             d2 = self.dump2[i]
@@ -891,8 +899,7 @@ def check_if_match():
 
 def banner():
     sys.stderr.write("\n\t:: BadChars.py (v:%s) - Exploit Development Bad Characters hunting tool." % VERSION)
-    sys.stderr.write("\n\t\tEquipped with Corelan.be Mona's buffers comparison LCS-based algorithm")
-    sys.stderr.write("\n\t\t(Longest Common Subsequence, as adapted by Peter Van Eeckhoutte).\n\n")
+    sys.stderr.write("\n\t\tEquipped with Corelan.be Mona's buffers comparison LCS-based algorithm\n\n")
 
 def main(argv):
     banner()
