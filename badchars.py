@@ -42,6 +42,15 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+    @staticmethod
+    def strip_colors(line):
+        line = line.replace(bcolors.HEADER, '')
+        line = line.replace(bcolors.OKBLUE, '')
+        line = line.replace(bcolors.OKGREEN, '')
+        line = line.replace(bcolors.WARNING, '')
+        line = line.replace(bcolors.FAIL, '')
+        return line.replace(bcolors.ENDC, '')
+
 def _out(x, color=None):
     if not options.quiet:
         if color and options.colored: return color + x + bcolors.ENDC
@@ -666,7 +675,8 @@ class HexDumpPrinter:
         if options.colored:
             letter = bcolors.HEADER + letter + bcolors.ENDC
 
-        return '{}{} | {} | {} | {} | {}'.format(letter, d1t[0], d1t[1], d1t[2].ljust(16), d2t[1], d2t[2])
+        padding = ' ' * (17 - len(bcolors.strip_colors(d1t[2])))
+        return '{}{} | {} | {}{}| {} | {}'.format(letter, d1t[0], d1t[1], d1t[2], padding, d2t[1], d2t[2])
 
     @staticmethod
     def extract_bytes(line):
@@ -727,7 +737,7 @@ class HexDumpPrinter:
             else:
                 address = address
 
-        return '{}{} | {} | {}'.format(letter, address, bytes_line, ascii)
+        return '{}{} | {} | {}'.format(letter, address, bytes_line, ascii.ljust(16))
 
     def highlight_differences(self, d1, d2):
         if d1 != d2:
