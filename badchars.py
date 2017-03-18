@@ -822,12 +822,12 @@ def parse_options():
     usage += "\n\nAvailable formats:\n\t" + formats
 
     parser = OptionParser(usage = usage)
-    parser.add_option("-c", "--colored", action="store_true", dest="colored", default=False, 
-                        help="Colors the comparison output.")
     parser.add_option("", "--format1", metavar="FORMAT", dest="format1", default=None, 
                         help="Enforce specific format on first buffer.")
     parser.add_option("", "--format2", metavar="FORMAT", dest="format2", default=None, 
                         help="Enforce specific format on second buffer.")
+    parser.add_option("-C", "--nocolors", action="store_false", dest="colored", default=True, 
+                        help="Don't apply colors to the comparison output.")
     parser.add_option("-w", "--wide", action="store_true", dest="wide", default=False, 
                         help="Wide mode, display hex dumps next to each other.")
     parser.add_option("-e", "--match-empty", action="store_true", dest="match_empty", default=False, 
