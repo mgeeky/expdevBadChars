@@ -158,11 +158,11 @@ This is memory dump taken straight from OllyDbg while analysing what the heck is
 
 Now we are going to highlight any **bad characters** in default options set
 
-![Example1](1.jpg)
+![Example1](1.png)
 
 Or for those who prefer classical output, the **LCS** algorithm may be turned off as well:
 
-![Example1](2.jpg)
+![Example1](2.png)
 
 
 Looks like we have a corrupted byte - **0x2f** has been replaced with **0x5c** (`/` => `\`).
@@ -199,7 +199,7 @@ Let's take for instance following `memdump`:
 
 It contains some bytes added, some removed. This is what the binary diffing would look like using LCS-modified algorithm taken from Mona.py:
 
-![Example2](3.jpg)
+![Example2](3.png)
 
 
 
