@@ -104,9 +104,18 @@ class BytesParser():
 
         if format:
             out(dbg("Using user-specified format: %s" % format))
-            assert format in BytesParser.formats_rex.keys(), \
+
+            try:
+                self.format = BytesParser.interpret_format_name(format)
+            except Exception:
+                out(dbg("alias not found: %s" % format))
+
+            assert (format in BytesParser.formats_rex.keys() or self.format is not None), \
                     "Format '%s' is not implemented." % format
-            self.format = format
+                    
+            if self.format is None:
+                self.format = format
+
         else:
             self.recognize_format()
 
@@ -133,7 +142,7 @@ class BytesParser():
 
     @staticmethod
     def interpret_format_name(name):
-        for k, v in BytesParser.formats_aliases:
+        for k, v in BytesParser.formats_aliases.items():
             if name.lower() in v:
                 return k
         raise Exception("Format name: %s not recognized as alias." % name)
