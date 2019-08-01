@@ -82,7 +82,9 @@ class BytesParser():
         'powershell': r'^[^0x]+((?:0x[0-9a-f]{1,2},?)+)$',
         'byte-array': r'^[^0x]*((?:0x[0-9a-f]{2}(?:,\s?))+)',
         'js-unicode': r'^[^%u0-9a-f]*((?:%u[0-9a-f]{4})+)$',
-        'dword': r'^(?:(?:0x[0-9a-f]{1,8}\s[<>\w\+]+):\s)?((?:0x[0-9a-f]{8},?\s*)+)$',
+        #modify from r'^(?:((?:0x[0-9a-f]{1,8}\s[<>\w\+]+)):\s*)?((?:0x[0-9a-f]{8},?\s*)+)$
+        #include match of GDB address 
+        'dword': r'^(?:((?:0x[0-9a-f]{1,8}\s[<>\w\+]+)|(?:0x[0-9a-f]{1,8})):\s*)?((?:0x[0-9a-f]{8},?\s*)+)$',
     }
     formats_aliases = {
         'classic-hexdump': ['ollydbg'],
@@ -110,6 +112,7 @@ class BytesParser():
             except Exception:
                 out(dbg("alias not found: %s" % format))
 
+            #exit when user-specified format not in both formats_rex and formats_aliases 
             assert (format in BytesParser.formats_rex.keys() or self.format is not None), \
                     "Format '%s' is not implemented." % format
                     
@@ -205,7 +208,26 @@ class BytesParser():
     def unpack_dword(line):
         outs = ''
         i = 0
-        for m in re.finditer(r'((?:0x[0-9a-f]{8},?\s*))', line):
+        """
+        modify from r'((?:0x[0-9a-f]{8},?\s*))
+        added constrain to remove match of gdb address format
+        e.g, remove match of 0xffffd67a:
+
+        0xffffd67a:     0xdfb8c2db      0xd9db029c      0x5bf42474      0x0bb1c933
+        0xffffd68a:     0x031a4331      0xeb831a43      0xf62ae2fc      0x554d8309
+        0xffffd69a:     0x39405b68      0x92f27cfd      0x8502ea8e      0x3b6b895f
+        0xffffd6aa:     0x2b39ae29      0xabbd3121      0xc5d4531d      0x1a55ff4e
+        0xffffd6ba:     0xfb10acc6      0x0000d225      0x96900000      0x4520f7fe
+        0xffffd6ca:     0xd000f7fe      0x0001f7ff      0x83400000      0x00000804
+        0xffffd6da:     0x83610000      0x84080804      0x00010804      0xd7040000
+        0xffffd6ea:     0x8430ffff      0x84200804      0x45200804      0xd6fcf7fe
+        0xffffd6fa:     0xd950ffff      0x0001f7ff      0xd83c0000      0x0000ffff
+        0xffffd70a:     0xd8480000      0xde34ffff      0xde62ffff      0xde71ffff
+        0xffffd71a:     0xde82ffff      0xde97ffff      0xdea1ffff      0xdeb4ffff
+        0xffffd72a:     0xdebdffff      0xdec8ffff
+            
+        """
+        for m in re.finditer(r'((?:0x[0-9a-f]{8}(?!:),?\s*))', line):
             l = m.group(0)
             l = l.replace(',', '')
             l = l.replace(' ', '')
