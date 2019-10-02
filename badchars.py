@@ -115,8 +115,8 @@ class BytesParser():
             else:		
                 try:
                     self.format = BytesParser.interpret_format_name(format)
-                except Exception:
-                    out(dbg("alias not found: %s" % format))
+                except Exception, e:
+                    out(dbg(str(e)))
 
                 #exit when user-specified format not in both formats_rex and formats_aliases 
                 assert (format in BytesParser.formats_rex.keys() or self.format is not None), \
