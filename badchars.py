@@ -102,14 +102,16 @@ class BytesParser():
 
         BytesParser.compile_regexps()
 
-        self.normalize_input()
+        #do not normalize input on raw format to prevent input tempering
+        if str(format).lower() != "raw":
+            self.normalize_input()
 
         if format:
             out(dbg("Using user-specified format: %s" % format))
 
             if str(format).lower() == "raw":
                 self.format = "raw"
-                           
+
             else:		
                 try:
                     self.format = BytesParser.interpret_format_name(format)
