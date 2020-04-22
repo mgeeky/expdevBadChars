@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Bad characters matching tool capable of transforming input bytes from
 # many different hexdump / hex string / escaped hex strings formats.
@@ -16,6 +16,9 @@
 #
 # Written by: 
 # Mariusz B. / mgeeky, 2017
+#
+# Converted to Python 3 by:
+# Z.Y. Liew / onlylonly, Oct 2019
 #
 
 import re
