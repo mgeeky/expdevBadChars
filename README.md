@@ -206,3 +206,8 @@ It contains some bytes added, some removed. This is what the binary diffing woul
 # TODO
 
 - add some more input formats
+
+
+# Credits
+
+- [@onlylonly](https://github.com/onlylonly) - for fixing issue with `raw` format handling and helping convert script to Python3
