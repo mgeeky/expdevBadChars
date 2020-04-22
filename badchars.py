@@ -102,19 +102,25 @@ class BytesParser():
 
         BytesParser.compile_regexps()
 
-        self.normalize_input()
+        #do not normalize input on raw format to prevent input tempering
+        if str(format).lower() != "raw":
+            self.normalize_input()
 
         if format:
             out(dbg("Using user-specified format: %s" % format))
 
-            try:
-                self.format = BytesParser.interpret_format_name(format)
-            except Exception:
-                out(dbg("alias not found: %s" % format))
+            if str(format).lower() == "raw":
+                self.format = "raw"
 
-            #exit when user-specified format not in both formats_rex and formats_aliases 
-            assert (format in BytesParser.formats_rex.keys() or self.format is not None), \
-                    "Format '%s' is not implemented." % format
+            else:		
+                try:
+                    self.format = BytesParser.interpret_format_name(format)
+                except Exception, e:
+                    out(dbg(str(e)))
+
+                #exit when user-specified format not in both formats_rex and formats_aliases 
+                assert (format in BytesParser.formats_rex.keys() or self.format is not None), \
+                        "Format '%s' is not implemented." % format
                     
             if self.format is None:
                 self.format = format
