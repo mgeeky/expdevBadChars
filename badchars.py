@@ -59,7 +59,7 @@ def _out(x, color=None):
 
 def out(x): 
     o = _out(x)
-    if len(o): print o
+    if len(o): print (o)
         
 def ok(x): return _out("[+] " + x, bcolors.OKGREEN)
 def dbg(x): 
@@ -78,7 +78,7 @@ class BytesParser():
         'classic-hexdump':r'^[0-9a-f]*[0-9a-f]{2,}(?:\:|\s)+\s([0-9a-f\s]+)\s{2,}.+$',
         'hexdump-C': r'^[0-9a-f]*[0-9a-f]{2,}\s+\s([0-9a-f\s]+)\s*\|', 
         'escaped-hexes': r'^[^\'"]*((?:\'[\\\\x0-9a-f]{8,}\')|(?:"[\\\\x0-9a-f]{8,}"))',
-        'hexstring': r'^([0-9a-f]+)$',
+        'hexstring': r'^([0-9a-f ]+)$',
         'powershell': r'^[^0x]+((?:0x[0-9a-f]{1,2},?)+)$',
         'byte-array': r'^[^0x]*((?:0x[0-9a-f]{2}(?:,\s?))+)',
         'js-unicode': r'^[^%u0-9a-f]*((?:%u[0-9a-f]{4})+)$',
@@ -115,7 +115,7 @@ class BytesParser():
             else:		
                 try:
                     self.format = BytesParser.interpret_format_name(format)
-                except Exception, e:
+                except Exception as e:
                     out(dbg(str(e)))
 
                 #exit when user-specified format not in both formats_rex and formats_aliases 
@@ -143,11 +143,11 @@ class BytesParser():
 
     def normalize_input(self):
         input = []
-        for line in self.input.split('\n'):
+        for line in self.input.decode().split('\n'):
             line = line.strip()
-            line2 = line.encode('string-escape')
+            line2 = line.encode('unicode_escape')
             input.append(line2)
-        self.input = '\n'.join(input)
+        self.input = b'\n'.join(input)
 
     @staticmethod
     def interpret_format_name(name):
@@ -167,7 +167,7 @@ class BytesParser():
         return ''.join([c if c in string.printable else '.' for c in line])
 
     def recognize_format(self):
-        for line in self.input.split('\n'):
+        for line in self.input.decode().split('\n'):
             if self.format: break
             for format, rex in BytesParser.formats_compiled.items():
                 line = BytesParser.make_line_printable(line)
@@ -198,7 +198,7 @@ class BytesParser():
         for s in strip:
             l = l.replace(s, '')
 
-        for i in xrange(0, len(l), 2):
+        for i in range(0, len(l), 2):
             outb.append(int(l[i:i+2], 16))
         return outb
 
@@ -258,10 +258,11 @@ class BytesParser():
 
         if self.format == 'raw':
             out(dbg("Parsing %s as raw bytes." % self.name))
-            self.bytes = [ord(c) for c in list(self.input)]
+            #self.bytes = [ord(c) for c in list(self.input)]
+            self.bytes = self.input
             return len(self.bytes) > 0
         
-        for line in self.input.split('\n'):
+        for line in self.input.decode().split('\n'):
             callback_called = False
             if self.format in BytesParser.formats_callbacks.keys() and \
                     BytesParser.formats_callbacks[self.format]:
@@ -313,7 +314,7 @@ def memoized(func):
         cache[args] = val
         return val
     wrapper.__doc__ = func.__doc__
-    wrapper.func_name = '%s_memoized' % func.func_name
+    wrapper.__name__ = '%s_memoized' % func.__name__
     return wrapper
 
 def bin2hex(binbytes):
@@ -358,7 +359,7 @@ def guess_bad_chars(comp):
             bytes_in_changed_blocks[b] += 1
 
     # guess bad chars
-    likely_bc = [char for char, count in bytes_in_changed_blocks.iteritems() if count > 2]
+    likely_bc = [char for char, count in bytes_in_changed_blocks.items() if count > 2]
     if likely_bc:
         out(dbg("Very likely bad chars: %s" % bin2hex(sorted(likely_bc))))
         guessed_badchars += list(sorted(likely_bc))
@@ -501,7 +502,7 @@ class MemoryComparator(object):
 
         i = j = 0
         for unmodified, subpath in itertools.groupby(path, itemgetter(0)):
-            ydiffs = map(itemgetter(1), subpath)
+            ydiffs = list(map(itemgetter(1), subpath))
             dx, dy = len(ydiffs), sum(ydiffs)
             yield unmodified, dx, dy
             i += dx
@@ -544,9 +545,9 @@ class MemoryComparator(object):
                             mappings_by_byte[b][slc] += 1
                             slices.add(slc)
 
-        for b, values in mappings_by_byte.iteritems():
+        for b, values in mappings_by_byte.items():
             mappings_by_byte[b] = sorted(values.items(),
-                                     key=lambda (value, count): (-count, -len(value)))
+                                     key=lambda value, count: (-count, -len(value)))
 
         for c in self.get_chunks():
             dx, dy, xchunk, ychunk = c.dx, c.dy, c.xchunk, c.ychunk
@@ -673,7 +674,7 @@ class HexDumpPrinter:
     def extract_chunks(iterable):
         """ Retrieves chunks of the given :size from the :iterable """
         fill = object()
-        gen = itertools.izip_longest(fillvalue=fill, *([iter(iterable)] * 16))
+        gen = itertools.zip_longest(fillvalue=fill, *([iter(iterable)] * 16))
         return (tuple(x for x in chunk if x != fill) for chunk in gen)
 
     def construct_comparator_dump(self, mapping):
@@ -860,10 +861,15 @@ class HexDumpPrinter:
         return buff
 
 def fetch_file(filename, name, format):
-    out(dbg("Opening file '%s' as %s" % (filename, name)))
+    out(dbg("Opening file '%s' as %s in format: %s" % (filename, name, format)))
     with open(filename, 'rb') as f:
         buff = f.read()
-        b = BytesParser(buff, name, format)
+        try:
+            b = BytesParser(buff, name, format)
+        except UnicodeDecodeError as e:
+            out(warn("Bytes parsing failed on format %s and file (%s). Fall back to RAW instead." % (format, filename)))
+            b = BytesParser(buff, name, 'raw')
+
         if not b.parsed:
             sys.exit(1)
         else:
@@ -942,7 +948,7 @@ def check_if_match():
     bad_chars = defaultdict(list)
     minlen = min(len(buffers[0]), len(buffers[1]))
 
-    for i in xrange(minlen):
+    for i in range(minlen):
         if buffers[0][i] != buffers[1][i]:
             diff += 1
             bad_chars[buffers[0][i]].append(buffers[1][i])
@@ -975,11 +981,12 @@ def main(argv):
     res, bad_chars_dict = check_if_match()
     
     if not res:
-        out(ok("\t\nBuffers match. No Bad characters found.\n"))
+        print()
+        out(ok("Buffers match. No Bad characters found.\n"))
         return 0
     else:
         bad_chars_string = ''
-        bad_chars_flatten = filter(lambda x: x != -1, bad_chars_dict.keys())
+        bad_chars_flatten = [x for x in list(bad_chars_dict.keys()) if x != -1]
 
         if options.quiet:
             return 1
@@ -1027,6 +1034,9 @@ def main(argv):
                 out(warn("Too many differences to guess bad chars correctly."))
         else:
             draw_chunk_table(printer.get_comparator())
+
+        print()
+        out(warn("You may as well consider changing buffers formats (--format1 / --format2) as bytes could be fetched wrongly."))
         
     return 0
         
