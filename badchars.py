@@ -31,7 +31,7 @@ from optparse import OptionParser
 from operator import itemgetter
 from collections import defaultdict, namedtuple
 
-VERSION = '0.2'
+VERSION = '0.3'
 
 options = { }
 filenames = []
