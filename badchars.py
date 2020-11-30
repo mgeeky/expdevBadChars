@@ -908,6 +908,8 @@ def parse_options():
                         help="Print matching bytes as empty line from bad_buffer.")
     parser.add_option("-n", "--no-lcs", action="store_true", dest="dont_use_lcs", default=False, 
                         help="Don't use LCS (Longest Common Subsequence) algorithm in hex dump printing. Go with simple comparison.")
+    parser.add_option("-f", "--first-bytes-only", action="store_true", dest="first_bytes", default=False, 
+                        help="Compare only N first bytes from a bigger file. If good_buffer is smaller than bad_buffer, only first Len(good_buffer) bytes of bad_buffer will be processed.")
     parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, 
                         help="Debug mode - more verbose.")
     parser.add_option("-q", "--quiet", action="store_true", dest="quiet", default=False, 
@@ -975,11 +977,22 @@ def main(argv):
     buffers[0].extend(fetch_file(filenames[0], 'good_buffer', options.format1))
     buffers[1].extend(fetch_file(filenames[1], 'bad_buffer', options.format2))
 
-    if len(buffers[0]) != len(buffers[1]):
+    len0 = len(buffers[0])
+    len1 = len(buffers[1])
+
+    if len0 != len1:
         out("\n"+warn("Specified buffer files differ in contents length (%d, %d)!" \
-                    % (len(buffers[0]), len(buffers[1]))))
+                    % (len0, len1)))
+
+        if options.first_bytes:
+            if len0 > len1:
+                buffers[0] = buffers[0][:len1]
+                out(dbg("Comparing only first %d bytes from good_buffer." % len1))
+            elif len1 > len0:
+                buffers[1] = buffers[1][:len0]
+                out(dbg("Comparing only first %d bytes from bad_buffer." % len0))
     else:
-        out(ok("Buffers are of same size: %d bytes." % len(buffers[0])))
+        out(ok("Buffers are of same size: %d bytes." % len0))
         
     res, bad_chars_dict = check_if_match()
     
@@ -996,7 +1009,7 @@ def main(argv):
 
         printer = HexDumpPrinter(options, buffers[0], buffers[1])
 
-        minlen = min(len(buffers[0]), len(buffers[1]))
+        minlen = min(len0, len1)
         proc = (float(res)/float(minlen) * 100.0)
 
         if not options.dont_use_lcs:
