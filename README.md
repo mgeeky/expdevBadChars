@@ -211,3 +211,21 @@ It contains some bytes added, some removed. This is what the binary diffing woul
 # Credits
 
 - [@onlylonly](https://github.com/onlylonly) - for fixing issue with `raw` format handling and helping convert script to Python3
+
+
+---
+
+### ☕ Show Support ☕
+
+This and other projects are outcome of sleepless nights and **plenty of hard work**. If you like what I do and appreciate that I always give back to the community,
+[Consider buying me a coffee](https://github.com/sponsors/mgeeky) _(or better a beer)_ just to say thank you! 💪 
+
+---
+
+## Author
+
+```   
+   Mariusz B. / mgeeky, 21
+   <mb [at] binary-offensive.com>
+   (https://github.com/mgeeky)
+```
