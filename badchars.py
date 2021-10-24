@@ -15,7 +15,7 @@
 #       https://github.com/corelan/mona/blob/master/LICENSE  
 #
 # Written by: 
-# Mariusz B. / mgeeky, 2017-2020
+# Mariusz Banach / mgeeky, 2017-2020
 #
 # Converted to Python 3 by:
 # Z.Y. Liew / onlylonly, Oct 2019
