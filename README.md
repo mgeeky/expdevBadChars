@@ -13,30 +13,32 @@ Additionally, this script has been equipped with _Longest Common Subsequence_ ba
 Here comes the tool usage, pretty simple:
 
 ```
-	:: BadChars.py (v:0.2) - Exploit Development Bad Characters hunting tool.
-		Equipped with Corelan.be Mona's buffers comparison LCS-based algorithm
+        :: BadChars.py (v:0.4) - Exploit Development Bad Characters hunting tool.
+                Equipped with Corelan.be Mona's buffers comparison LCS-based algorithm
 
 Usage: badchars.py [options] good_buffer bad_buffer
 
 Buffers explanation:
-	- good_buffer	- file containing buffer considered to be a model one, having expected bytes in it.
-	- bad_buffer	- file that has tainted/modified/varying bytes comparing to good_buffer.
+        - good_buffer   - file containing buffer considered to be a model one, having expected bytes in it.
+        - bad_buffer    - file that has tainted/modified/varying bytes comparing to good_buffer.
 
 Available formats:
-	'raw', 'hexdump', 'js-unicode', 'dword', 'xxd', 'byte-array', 'hexstring', 'hexdump-C', 'classic-hexdump', 'escaped-hexes', 'powershell', 'gdb', 'ollydbg', 'ruby', 'c', 'carray', 'python'
+        'raw', 'xxd', 'hexdump', 'classic-hexdump', 'hexdump-C', 'escaped-hexes', 'hexstring', 'powershell', 'byte-array', 'js-unicode', 'dword', 'ollydbg', 'ruby', 'c', 'carray', 'python', 'gdb'
 
 Options:
-  -h, --help         show this help message and exit
-  -c, --colored      Colors the comparison output.
-  --format1=FORMAT   Enforce specific format on first buffer.
-  --format2=FORMAT   Enforce specific format on second buffer.
-  -w, --wide         Wide mode, display hex dumps next to each other.
-  -e, --match-empty  Print matching bytes as empty line from bad_buffer.
-  -n, --no-lcs       Don't use LCS (Longest Common Subsequence) algorithm in
-                     hex dump printing. Go with simple comparison.
-  -d, --debug        Debug mode - more verbose.
-  -q, --quiet        Quiet mode, no infos. Return 1 if not equal, 0 otherwise.
-
+  -h, --help            show this help message and exit
+  --format1=FORMAT      Enforce specific format on first buffer.
+  --format2=FORMAT      Enforce specific format on second buffer.
+  -C, --nocolors        Don't apply colors to the comparison output.
+  -w, --wide            Wide mode, display hex dumps next to each other.
+  -e, --match-empty     Print matching bytes as empty line from bad_buffer.
+  -n, --no-lcs          Don't use LCS (Longest Common Subsequence) algorithm
+                        in hex dump printing. Go with simple comparison.
+  -f NUMBER, --first-bytes=NUMBER
+                        Compare only N first bytes from both files.
+  -d, --debug           Debug mode - more verbose.
+  -q, --quiet           Quiet mode, no infos. Return 1 if not equal, 0
+                        otherwise.
 ```
 
 Among available formats we can find those that can me made by tools such as `hexdump`, `hd`, `xxd`, `msfvenom` various output formats (as coded in programming languages, for instance Ruby, Python, Powershell, Java) but also supporting **GDB** `x/xw` / _DWORD_ dump display!

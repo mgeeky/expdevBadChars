@@ -15,7 +15,7 @@
 #       https://github.com/corelan/mona/blob/master/LICENSE  
 #
 # Written by: 
-# Mariusz Banach / mgeeky, 2017-2020
+# Mariusz Banach / mgeeky, 2017-2022
 #
 # Converted to Python 3 by:
 # Z.Y. Liew / onlylonly, Oct 2019
@@ -31,7 +31,7 @@ from optparse import OptionParser
 from operator import itemgetter
 from collections import defaultdict, namedtuple
 
-VERSION = '0.3'
+VERSION = '0.4'
 
 options = { }
 filenames = []
@@ -908,8 +908,8 @@ def parse_options():
                         help="Print matching bytes as empty line from bad_buffer.")
     parser.add_option("-n", "--no-lcs", action="store_true", dest="dont_use_lcs", default=False, 
                         help="Don't use LCS (Longest Common Subsequence) algorithm in hex dump printing. Go with simple comparison.")
-    parser.add_option("-f", "--first-bytes-only", action="store_true", dest="first_bytes", default=False, 
-                        help="Compare only N first bytes from a bigger file. If good_buffer is smaller than bad_buffer, only first Len(good_buffer) bytes of bad_buffer will be processed.")
+    parser.add_option("-f", "--first-bytes", type=int, default=0, metavar='NUMBER', dest="first_bytes", 
+                        help="Compare only N first bytes from both files.")
     parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, 
                         help="Debug mode - more verbose.")
     parser.add_option("-q", "--quiet", action="store_true", dest="quiet", default=False, 
@@ -984,13 +984,16 @@ def main(argv):
         out("\n"+warn("Specified buffer files differ in contents length (%d, %d)!" \
                     % (len0, len1)))
 
-        if options.first_bytes:
-            if len0 > len1:
-                buffers[0] = buffers[0][:len1]
-                out(dbg("Comparing only first %d bytes from good_buffer." % len1))
-            elif len1 > len0:
-                buffers[1] = buffers[1][:len0]
-                out(dbg("Comparing only first %d bytes from bad_buffer." % len0))
+        if options.first_bytes > 0:
+            num = options.first_bytes
+            if len0 < len1 and len0 < num:
+                num = len0
+                
+            elif len1 < len0 and len1 < num:
+                num = len1
+
+            buffers[0] = buffers[0][:num]
+            buffers[1] = buffers[1][:num]
     else:
         out(ok("Buffers are of same size: %d bytes." % len0))
         
