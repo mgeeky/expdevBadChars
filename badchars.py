@@ -31,11 +31,21 @@ from optparse import OptionParser
 from operator import itemgetter
 from collections import defaultdict, namedtuple
 
-VERSION = '0.4'
+COLORAMA = False
+try:
+    import colorama
+    COLORAMA = True
+except:
+    pass
+
+VERSION = '0.5'
 
 options = { }
 filenames = []
 buffers = [[], []]
+
+if COLORAMA:
+    colorama.init()
 
 class bcolors:
     HEADER = '\033[95m'
@@ -81,13 +91,14 @@ class BytesParser():
         'classic-hexdump':r'^[0-9a-f]*[0-9a-f]{2,}(?:\:|\s)+\s([0-9a-f\s]+)\s{2,}.+$',
         'hexdump-C': r'^[0-9a-f]*[0-9a-f]{2,}\s+\s([0-9a-f\s]+)\s*\|', 
         'escaped-hexes': r'^[^\'"]*((?:\'[\\\\x0-9a-f]{8,}\')|(?:"[\\\\x0-9a-f]{8,}"))',
+        'c-hexstring' : r'^[^\\x]*((?:\\\\x[0-9a-f]{1,2}\s*)+)',
         'hexstring': r'^([0-9a-f ]+)$',
         'powershell': r'^[^0x]+((?:0x[0-9a-f]{1,2},?)+)$',
         'byte-array': r'^[^0x]*((?:0x[0-9a-f]{2}(?:,\s?))+)',
         'js-unicode': r'^[^%u0-9a-f]*((?:%u[0-9a-f]{4})+)$',
         #modify from r'^(?:((?:0x[0-9a-f]{1,8}\s[<>\w\+]+)):\s*)?((?:0x[0-9a-f]{8},?\s*)+)$
         #include match of GDB address 
-        'dword': r'^(?:((?:0x[0-9a-f]{1,8}\s[<>\w\+]+)|(?:0x[0-9a-f]{1,8})):\s*)?((?:0x[0-9a-f]{8},?\s*)+)$',
+        'dword': r'^((?:(?:(?:0x[0-9a-f]{1,8}\s+[<>\w\+]+)|(?:0x[0-9a-f]{1,8})):\s*)?((?:0x[0-9a-f]{8},?\s*)+))$',
     }
     formats_aliases = {
         'classic-hexdump': ['ollydbg'],
@@ -171,12 +182,15 @@ class BytesParser():
 
     def recognize_format(self):
         for line in self.input.decode().split('\n'):
+            line = line.strip().replace('\t', '').replace('\n', '').replace('\r', '')
+            line = line.strip().replace('\\t', '    ').replace('\\n', '').replace('\\r', '')
+
             if self.format: break
             for format, rex in BytesParser.formats_compiled.items():
                 line = BytesParser.make_line_printable(line)
 
                 out(dbg("Trying format %s on ('%s')" % (format, line)))
-                
+
                 if rex.match(line):
                     out(ok("%s has been recognized as %s formatted." % (self.name, format)))
                     self.format = format
@@ -197,7 +211,7 @@ class BytesParser():
     def post_process_bytes_line(line):
         outb = []
         l = line.strip()[:]
-        strip = ['0x', ',', ' ', '\\', 'x', '%u', '+', '.', "'", '"']
+        strip = ['0x', ',', ' ', '\\', '\\\\', 'x', '%u', '+', '.', "'", '"']
         for s in strip:
             l = l.replace(s, '')
 
@@ -252,7 +266,10 @@ class BytesParser():
                 outs += '%02x' % b
 
         out(dbg("After callback ('%s')" % outs))
-        return BytesParser.formats_compiled['hexstring'].match(outs)
+        o = BytesParser.formats_compiled['hexstring'].match(outs)
+        
+        assert outs == o.group(1), "hexstring regex extracted wrong Hex Bytes compared to what unpack_dword unpacked from GDB output!"
+        return o
 
     def fetch_bytes(self):
         if not self.format:
@@ -264,8 +281,11 @@ class BytesParser():
             #self.bytes = [ord(c) for c in list(self.input)]
             self.bytes = self.input
             return len(self.bytes) > 0
-        
+
         for line in self.input.decode().split('\n'):
+            line = line.strip().replace('\t', '').replace('\n', '').replace('\r', '')
+            line = line.strip().replace('\\t', '    ').replace('\\n', '').replace('\\r', '')
+
             callback_called = False
             if self.format in BytesParser.formats_callbacks.keys() and \
                     BytesParser.formats_callbacks[self.format]:
@@ -966,8 +986,8 @@ def check_if_match():
     return (diff, bad_chars)
 
 def banner():
-    sys.stderr.write("\n\t:: BadChars.py (v:%s) - Exploit Development Bad Characters hunting tool." % VERSION)
-    sys.stderr.write("\n\t\tEquipped with Corelan.be Mona's buffers comparison LCS-based algorithm\n\n")
+    sys.stderr.write("\n    :: BadChars.py (v:%s) - Exploit Development Bad Characters hunting tool." % VERSION)
+    sys.stderr.write("\n       Equipped with Corelan.be Mona's buffers comparison LCS-based algorithm\n\n")
 
 def main(argv):
     banner()

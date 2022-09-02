@@ -1,4 +1,4 @@
-## expdevBadChars
+# expdevBadChars
 
 This is a Bad Characters highlighter intended to be used for exploit development purposes.
 It supports multiple input formats and is able to effectively convert from regex-matching format to the byte array.
@@ -8,7 +8,16 @@ This makes this tool useful while we have for instance shellcode encoded as a Py
 Additionally, this script has been equipped with _Longest Common Subsequence_ based algorithm designed by _Peter Van Eeckhoutte_ from Corelan.be team in his **Mona.py** tool (specifically `filecompare` function). This makes the tool more robust and reliable even in conditions of not fully matching buffers, shifted a bit or otherwise severly corrupted.
 
 
-# Usage
+## Installation
+
+On Windows, for best experience, install following optional requirements:
+
+```
+pip3 install colorama
+```
+
+
+## Usage
 
 Here comes the tool usage, pretty simple:
 
@@ -87,7 +96,7 @@ $buf += 0x45,0xf,0x3,0x45,0xd5,0xb0,0x7b,0x22,0x1,0xb6
 This tool has been crafted just for this annoying situation.
 
 
-# Example use case
+## Example use case
 
 Consider two input files:
 
@@ -205,12 +214,12 @@ It contains some bytes added, some removed. This is what the binary diffing woul
 
 
 
-# TODO
+## TODO
 
 - add some more input formats
 
 
-# Credits
+## Credits
 
 - [@onlylonly](https://github.com/onlylonly) - for fixing issue with `raw` format handling and helping convert script to Python3
 
@@ -227,7 +236,7 @@ This and other projects are outcome of sleepless nights and **plenty of hard wor
 ## Author
 
 ```   
-   Mariusz Banach / mgeeky, 21
+   Mariusz Banach / mgeeky, 17-22
    <mb [at] binary-offensive.com>
    (https://github.com/mgeeky)
 ```
