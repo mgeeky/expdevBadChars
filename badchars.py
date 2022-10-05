@@ -38,7 +38,7 @@ try:
 except:
     pass
 
-VERSION = '0.5'
+VERSION = '0.6'
 
 options = { }
 filenames = []
@@ -268,7 +268,9 @@ class BytesParser():
         out(dbg("After callback ('%s')" % outs))
         o = BytesParser.formats_compiled['hexstring'].match(outs)
         
-        assert outs == o.group(1), "hexstring regex extracted wrong Hex Bytes compared to what unpack_dword unpacked from GDB output!"
+        if o is not None:
+            assert outs == o.group(1), "hexstring regex extracted wrong Hex Bytes compared to what unpack_dword unpacked from GDB output!"
+
         return o
 
     def fetch_bytes(self):
